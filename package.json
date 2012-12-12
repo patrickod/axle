@@ -1,19 +1,40 @@
 {
-  "author": "Matt Insler <matt.insler@gmail.com> (www.mattinsler.com)",
   "name": "axle",
   "description": "",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "homepage": "https://github.com/mattinsler/axle"
+  "author": {
+    "name": "Matt Insler",
+    "email": "matt.insler@gmail.com",
+    "url": "http://www.mattinsler.com"
+  },
   "repository": {
     "type": "git",
     "url": "git@github.com:mattinsler/axle.git"
   },
-  "dependencies": {
-    "coffee-script": "latest",
-    "distribute": "latest",
-    "colors": "latest"
+  "bugs": {
+    "url": "https://github.com/mattinsler/axle/issues"
   },
-  "bin": {
-    "axle": "./bin/axle"
-  },
-  "main": "index"
+  "licenses": [
+      {
+        "type": "MIT",
+        "url": "https://github.com/mattinsler/axle/blob/master/LICENSE-MIT"
+      }
+    ],
+    "main": "index",
+    "bin": {
+      "axle": "./bin/axle"
+    },
+    "engines": {
+      "node": ">= 0.8.0"
+    },
+    "dependencies": {
+      "coffee-script": "latest",
+      "distribute": "latest",
+      "portfinder": "latest",
+      "colors": "latest"
+    },
+    "devDependencies": {
+    },
+    "keywords": []
 }

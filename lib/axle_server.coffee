@@ -31,7 +31,8 @@ class Axle
     
     @log = -> console.log '[' + 'axle'.cyan + '] ' +  arguments[0]
     
-    @server = require('http').createServer().listen(port)
+    @server = require('http').createServer().listen port, =>
+      @log 'Running on port ' + @server.address().port.toString().green
     
     @routes = []
     @distribute = require('distribute')(@server)

@@ -24,7 +24,10 @@ function start_coffee(args) {
 function start_script(original_script, args) {
   var script = original_script;
   if (script.indexOf('/') !== 0) { script = process.cwd() + '/' + script; }
-  try { script = fs.readlinkSync(script); } catch(e) {}
+  try {
+    var link = fs.readlinkSync(script);
+    script = link[0] !== '.' ? link : require('path').dirname(script) + '/' + link;
+  } catch(e) {}
   
   var content = fs.readFileSync(script, 'utf8');
   content = content.slice(content.indexOf('\n') + 1);
