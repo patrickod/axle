@@ -1,5 +1,4 @@
 require 'colors'
-betturl = require 'betturl'
 
 parse_endpoint = (endpoint) ->
   if parseInt(endpoint).toString() is endpoint.toString()
@@ -36,7 +35,6 @@ class Axle
     
     @routes = []
     @distribute = require('distribute')(@server)
-    # @interval_id = setInterval (=> @reap()), 10 * 1000
     
     @distribute.use (req, res, next) =>
       [host, _x] = req.headers.host.split(':')
@@ -48,15 +46,6 @@ class Axle
       
       @log 'No route for ' + host.red
       next()
-  
-  # reap: ->
-  #   @routes.forEach (e) =>
-  #     require('request') {
-  #       url: "http://#{e.target.host}:#{e.target.port}/"
-  #       method: 'HEAD'
-  #       timeout: 5000
-  #     }, (err, req, body) =>
-  #       @remove(e) if err?
   
   remove: (route) ->
     @routes = @routes.filter (r) =>

@@ -3,13 +3,6 @@ require 'colors'
 net = require 'net'
 http = require 'http'
 
-DOMAINS = []
-if process.env.HUB_DOMAINS?
-  Array::push.apply(DOMAINS, process.env.HUB_DOMAINS.split(','))
-try
-  name = require(process.cwd() + '/package').name
-  DOMAINS.push("#{name}.localhost.dev") if name?
-
 class AxleClient
   constructor: (@server) ->
     @log = -> console.log '[' + 'axle'.cyan + '] ' +  arguments[0]
@@ -28,8 +21,8 @@ class AxleClient
     @connect()
   
   on_connect: ->
-    @send('register', DOMAINS.map (d) => {host: d, endpoint: @server.address().port})
-    @log 'Listening on ' + DOMAINS.map((d) -> d.green).join(', ')
+    @send('register', AxleClient.DOMAINS.map (d) => {host: d, endpoint: @server.address().port})
+    @log 'Listening on ' + AxleClient.DOMAINS.map((d) -> d.green).join(', ')
   
   on_end: ->
     
@@ -38,10 +31,7 @@ class AxleClient
     setTimeout (=> @connect()), 1000
   
   on_error: (err) ->
-    console.log '[ERROR] ' + err.code
-    
-    # if err.code is 'ECONNREFUSED'
-    #   setTimeout (=> @connect()), 1000
+    @log 'ERROR: ' + err.code.red
   
   on_data: ->
     console.log 'data'
@@ -53,3 +43,6 @@ http.createServer = ->
   server = _createServer.apply(http, arguments)
   new AxleClient(server)
   server
+
+
+module.exports = AxleClient

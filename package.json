@@ -1,21 +1,4 @@
 {
-  "name": "axle",
-  "version": "0.0.1",
-  "private": true,
-  "engines": {
-    "node": "0.8.x",
-    "npm": "1.1.x"
-  },
-  "dependencies": {
-    "distribute": "latest",
-    "portfinder": "latest",
-    "request": "latest",
-    "colors": "latest"
-  }
-}
-
-
-{
   "author": "Matt Insler <matt.insler@gmail.com> (www.mattinsler.com)",
   "name": "axle",
   "description": "",
@@ -25,6 +8,7 @@
     "url": "git@github.com:mattinsler/axle.git"
   },
   "dependencies": {
+    "coffee-script": "latest",
     "distribute": "latest",
     "colors": "latest"
   },
