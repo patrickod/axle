@@ -38,7 +38,7 @@ function start_script(original_script, args) {
   
   var script_path = require('os').tmpDir();
   var script_filename = require('crypto').randomBytes(8).toString('hex') + '.js';
-  var script_file = script_path + script_filename;
+  var script_file = PATH.join(script_path, script_filename);
   
   fs.writeFileSync(script_file, content, 'utf8');
   
