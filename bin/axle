@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+var Module = require('module').Module
+  , PATH = require('path');
+
 function start_node(args) {
   var script = args[0];
   if (script.indexOf('/') !== 0) { script = process.cwd() + '/' + script; }
@@ -12,9 +15,9 @@ function start_coffee(args) {
   var script = args[0];
   if (script.indexOf('/') !== 0) { script = process.cwd() + '/' + script; }
   
-  process.env.NODE_PATH = (process.env.NODE_PATH || '') + ':/usr/local/lib/node_modules';
-  require('module').Module._cache = {};
-  require('module').Module._initPaths();
+  // process.env.NODE_PATH = (process.env.NODE_PATH || '').split(':').concat(Module.globalPaths).join(':');
+  Module._cache = {};
+  Module._initPaths();
   
   require('coffee-script');
   process.argv = process.argv.slice(2);
@@ -26,27 +29,42 @@ function start_script(original_script, args) {
   if (script.indexOf('/') !== 0) { script = process.cwd() + '/' + script; }
   try {
     var link = fs.readlinkSync(script);
-    script = link[0] !== '.' ? link : require('path').dirname(script) + '/' + link;
+    script = link[0] !== '.' ? link : PATH.dirname(script) + '/' + link;
   } catch(e) {}
   
   var content = fs.readFileSync(script, 'utf8');
   content = content.slice(content.indexOf('\n') + 1);
-  var filename = require('path').dirname(script) + '/' + require('crypto').randomBytes(8).toString('hex') + '.js';
-  fs.writeFileSync(filename, content, 'utf8');
+  // var filename = PATH.dirname(script) + '/' + require('crypto').randomBytes(8).toString('hex') + '.js';
   
-  process.on('uncaughtException', function() {
-    try { fs.unlinkSync(filename); } catch(e) {}
+  var script_path = require('os').tmpDir();
+  var script_filename = require('crypto').randomBytes(8).toString('hex') + '.js';
+  var script_file = script_path + script_filename;
+  
+  fs.writeFileSync(script_file, content, 'utf8');
+  
+  process.on('uncaughtException', function(err) {
+    console.log('uncaughtException');
+    console.log(err.stack);
+    try { fs.unlinkSync(script_file); } catch(e) {}
   });
   process.on('exit', function() {
-    try { fs.unlinkSync(filename); } catch(e) {}
+    try { fs.unlinkSync(script_file); } catch(e) {}
   });
   
-  process.env.NODE_PATH = (process.env.NODE_PATH || '') + ':/usr/local/lib/node_modules';
-  require('module').Module._cache = {};
-  require('module').Module._initPaths();
+  process.env.NODE_PATH = (process.env.NODE_PATH || '').split(':').concat([process.cwd() + '/node_modules', PATH.dirname(script) + '/node_modules']).join(':');
+  Module._cache = {};
+  Module._initPaths();
+  
+  var _require = Module.prototype.require;
+  Module.prototype.require = function(path) {
+    if (PATH.basename(this.id) === script_filename && path[0] === '.') {
+      path = PATH.dirname(script) + '/' + path;
+    }
+    return _require.call(this, path);
+  };
   
   process.argv = ['node', original_script].concat(process.argv.slice(3));
-  require(filename);
+  require(script_file);
 }
 
 require('coffee-script');
