@@ -1,3 +1,5 @@
+
+
 exports.start_client = ->
   domains = []
   if process.env.AXLE_DOMAINS?
@@ -21,7 +23,7 @@ exports.start_server = ->
         @['on_' + command](data) if @['on_' + command]?
   
     on_connected: ->
-    
+      
   
     on_disconnected: ->
       if @routes?
@@ -32,6 +34,9 @@ exports.start_server = ->
     
       for r in @routes
         @axle.serve(r.host, r.endpoint)
+    
+    on_routes: ->
+      @client.socket.write(JSON.stringify(@axle.routes))
 
   axle = new AxleServer(process.env.PORT || 3000)
   tcp_server = new NetServer(client_factory: (socket) -> new AxleProtocol(axle, socket)).listen(1313)

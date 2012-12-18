@@ -24,6 +24,7 @@ class AxleClient
     @connect()
   
   on_server_error: (err) ->
+    console.log 'SERVER ERROR ======'
     if err.code is 'EADDRINUSE'
       portfinder.getPort (e, port) =>
         return console.error(e.stack) if e?
