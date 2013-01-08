@@ -1,7 +1,7 @@
 {
   "name": "axle",
   "description": "",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "homepage": "https://github.com/mattinsler/axle",
   "author": {
     "name": "Matt Insler",
@@ -30,7 +30,8 @@
     "coffee-script": "latest",
     "distribute": "latest",
     "portfinder": "latest",
-    "colors": "latest"
+    "colors": "latest",
+    "coupler": "latest"
   },
   "devDependencies": {
   },

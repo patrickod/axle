@@ -1,42 +1,46 @@
-
-
-exports.start_client = ->
-  domains = []
-  if process.env.AXLE_DOMAINS?
-    Array::push.apply(domains, process.env.AXLE_DOMAINS.split(','))
-  try
-    name = require(process.cwd() + '/package').name
-    domains.push("#{name}.localhost.dev") if name?
-  
-  AxleClient = require './lib/axle_client'
-  AxleClient.DOMAINS = domains
+exports.Axle = require './lib/axle'
+exports.Client = require './lib/client'
+exports.Service = require './lib/service'
 
 exports.start_server = ->
-  AxleServer = require './lib/axle_server'
-  NetServer = require './lib/net_server'
-  NetClient = require './lib/net_client'
-
-  class AxleProtocol
-    constructor: (@axle, socket) ->
-      @client = new NetClient(socket)
-      @client.on 'message', (command, data) =>
-        @['on_' + command](data) if @['on_' + command]?
+  require 'colors'
+  coupler = require 'coupler'
   
-    on_connected: ->
-      
+  log = -> console.log '[' + 'axle'.cyan + '] ' +  arguments[0]
   
-    on_disconnected: ->
-      if @routes?
-        @axle.remove(r) for r in @routes
+  axle = new exports.Axle(process.env.PORT || 3000)
+  coupler.accept(tcp: 1313).provide(axle: (connection) -> new exports.Service(axle, connection))
   
-    on_register: (data) ->
-      @routes = if Array.isArray(data) then data else [data]
-    
-      for r in @routes
-        @axle.serve(r.host, r.endpoint)
-    
-    on_routes: ->
-      @client.socket.write(JSON.stringify(@axle.routes))
-
-  axle = new AxleServer(process.env.PORT || 3000)
-  tcp_server = new NetServer(client_factory: (socket) -> new AxleProtocol(axle, socket)).listen(1313)
+  axle.on 'listening', (address) -> log 'Listening on port ' + address.port.toString().green
+  axle.on 'route:add', (route) -> log 'Added'.green + ' route ' + route.host + ' => ' + route.endpoint
+  axle.on 'route:remove', (route) -> log 'Removed'.red + ' route ' + route.host + ' => ' + route.endpoint
+  axle.on 'route:match', (from, to) -> log 'Routing ' + from.yellow + ' to ' + "#{to.host}:#{to.port}".green
+  axle.on 'route:miss', (host) -> log 'No route for ' + host.red
+  
+  axle.start()
+  
+exports.start_client = ->
+  require 'colors'
+  coupler = require 'coupler'
+  
+  log = -> console.log '[' + 'axle'.cyan + '] ' +  arguments[0]
+  
+  if process.env.AXLE_DOMAINS?
+    domains = process.env.AXLE_DOMAINS.split(',')
+  else
+    try
+      pkg = require(process.cwd() + '/package')
+      domains ?= pkg.axle_domains
+      domains ?= "#{pkg.name}.localhost.dev"
+      domains ?= []
+      domains = [domains] unless Array.isArray(domains)
+  
+  axle_service = coupler.connect(tcp: 1313).consume('axle')
+  client = new exports.Client(axle_service, domains)
+  
+  client.on 'listening', (server) -> log 'Listening on port ' + server.address().port.toString().green
+  client.on 'connected', -> log 'Listening on ' + client.domains.map((d) -> d.green).join(', ')
+  client.on 'reconnected', -> log 'Reconnected'.green + ' to axle service'
+  client.on 'disconnected', -> log 'Lost Connection'.yellow + ' to axle service'
+  
+  client.start()

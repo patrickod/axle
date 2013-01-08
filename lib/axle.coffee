@@ -1,4 +1,4 @@
-require 'colors'
+events = require 'events'
 
 parse_endpoint = (endpoint) ->
   if parseInt(endpoint).toString() is endpoint.toString()
@@ -25,33 +25,48 @@ class WildcardRoutePredicate extends RoutePredicate
   matches: (host) ->
     @rx.test(host)
 
-class Axle
-  constructor: (port) ->
+class Axle extends events.EventEmitter
+  constructor: (@port) ->
     throw new Error('Axle must take a port that is a number') unless port? and parseInt(port).toString() is port.toString()
     
     @log = -> console.log '[' + 'axle'.cyan + '] ' +  arguments[0]
+  
+  initialize: ->
+    return if @server?
     
-    @server = require('http').createServer().listen port, =>
-      @log 'Running on port ' + @server.address().port.toString().green
+    @server = require('http').createServer()
+    @server.on 'listening', => @emit('listening', @server.address())
+    @server.on 'error', (err) => @emit('error', err)
     
     @routes = []
     @distribute = require('distribute')(@server)
-    
     @distribute.use (req, res, next) =>
-      [host, _x] = req.headers.host.split(':')
+      try
+        [host, _x] = req.headers.host.split(':')
       
-      for e in @routes
-        if e.matches(host)
-          console.log '[' + 'axle'.cyan + '] Routing ' + host.yellow + ' to ' + "#{e.target.host}:#{e.target.port}".green
-          return next(e.target.port, e.target.host)
-      
-      @log 'No route for ' + host.red
-      next()
+        for e in @routes
+          if e.matches(host)
+            @emit('route:match', host, e.target)
+            return next(e.target.port, e.target.host)
+        
+        @emit('route:miss', host)
+        next()
+      catch e
+        next(e)
+  
+  start: ->
+    return if @server?
+    @initialize()
+    @server.listen(@port)
+  
+  stop: ->
+    @server.close()
+    delete @server
   
   remove: (route) ->
     @routes = @routes.filter (r) =>
       if r.host is route.host and r.endpoint is route.endpoint
-        @log 'Removed'.red + ' route ' + r.host + ' => ' + r.endpoint
+        @emit('route:remove', r)
         return false
       true
   
@@ -60,6 +75,6 @@ class Axle
       @routes.push(new WildcardRoutePredicate(host, endpoint))
     else
       @routes.push(new RoutePredicate(host, endpoint))
-    @log 'Added'.green + ' route ' + host + ' => ' + endpoint
+    @emit('route:add', {host: host, endpoint: endpoint})
 
 module.exports = Axle
