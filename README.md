@@ -30,10 +30,17 @@ $ axle caboose server
 To specify a domain or multiple domains you would like to route to this server, use the `AXLE_DOMAINS` environment variable.
 This is a comma separated list of domains.
 
+
 ```bash
 $ AXLE_DOMAINS=*.mattinsler.com,code.mattinsler.dev axle caboose server
 ```
 
+You can also specificy a list of domains for axle to route to this server by adding them to the package.json of the application which which you are currently working. For example:
+
+```json
+  "axle_domains": ["*.mattinsler.com", "code.mattinsler.dev"]
+```
+
 ## License
-Copyright (c) 2012 Matt Insler  
+Copyright (c) 2012 Matt Insler
 Licensed under the MIT license.
